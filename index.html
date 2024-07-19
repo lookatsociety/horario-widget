@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            background-color: #ffffff;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -16,13 +16,13 @@
             transition: background-color 0.3s ease;
         }
         .widget {
-            background-color: #ffffff;
+            background-color: #f5f5f5;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             padding: 20px;
             width: 300px;
             position: relative;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
             z-index: 1;
         }
         .header {
@@ -42,28 +42,16 @@
             cursor: pointer;
             position: relative;
         }
-        .class button {
+        .class .color-picker {
             position: absolute;
             top: 10px;
             right: 10px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #ffffff;
-            font-size: 16px;
-        }
-        .class input[type="color"] {
-            position: absolute;
-            top: 10px;
-            right: 50px;
-            border: none;
-            padding: 0;
             width: 20px;
             height: 20px;
             border-radius: 50%;
             cursor: pointer;
-            outline: none;
-            background-color: transparent;
+            background: none;
+            border: 2px solid #fff;
         }
         .fisica { background-color: #4a90e2; }
         .dibujo { background-color: #f5a623; }
@@ -118,6 +106,7 @@
         .dark-mode .widget {
             background-color: #1F1F1F;
             color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
@@ -130,43 +119,15 @@
             </div>
         </div>
         <div class="header">Horario</div>
-        <div class="day">
-            <div class="class fisica">
-                <input type="color" onchange="changeColor(this)" title="Elegir color">
-                <input class="editable subject" value="Física">
-                <input class="editable time" value="8:00 AM - 9:30 AM">
-            </div>
-            <div class="class dibujo">
-                <input type="color" onchange="changeColor(this)" title="Elegir color">
-                <input class="editable subject" value="Dibujo">
-                <input class="editable time" value="9:30 AM - 11:00 AM">
-            </div>
-            <div class="class ingles">
-                <input type="color" onchange="changeColor(this)" title="Elegir color">
-                <input class="editable subject" value="Inglés">
-                <input class="editable time" value="11:00 AM - 2:00 PM">
-            </div>
-            <div class="class filosofia">
-                <input type="color" onchange="changeColor(this)" title="Elegir color">
-                <input class="editable subject" value="Filosofía">
-                <input class="editable time" value="2:00 PM - 4:00 PM">
-                <input class="editable location" value="Lab 9b">
-            </div>
-            <div class="class ciencias">
-                <input type="color" onchange="changeColor(this)" title="Elegir color">
-                <input class="editable subject" value="Ciencias Naturales">
-                <input class="editable time" value="4:00 PM - 6:00 PM">
-                <input class="editable location" value="Lab 2a">
-            </div>
-            <div class="class mates">
-                <input type="color" onchange="changeColor(this)" title="Elegir color">
-                <input class="editable subject" value="Mates">
-                <input class="editable time" value="6:00 PM - 7:00 PM">
-                <input class="editable location" value="Aula 3.4.1">
-            </div>
+        <div class="day" id="dayContainer">
+            <!-- Clases se generan dinámicamente -->
         </div>
     </div>
+    <input type="color" id="hiddenColorPicker" style="display:none;" onchange="updateColor(this)">
+
     <script>
+        let currentColorPicker;
+
         function toggleMenu() {
             const menuContent = document.getElementById('menuContent');
             menuContent.style.display = menuContent.style.display === 'block' ? 'none' : 'block';
@@ -176,10 +137,77 @@
             document.body.classList.toggle('dark-mode');
         }
 
-        function changeColor(input) {
-            const color = input.value;
-            input.parentElement.style.backgroundColor = color;
+        function openColorPicker(element) {
+            currentColorPicker = element;
+            const colorPicker = document.getElementById('hiddenColorPicker');
+            colorPicker.click();
         }
+
+        function updateColor(input) {
+            const color = input.value;
+            currentColorPicker.style.backgroundColor = color;
+            currentColorPicker.parentElement.style.backgroundColor = color;
+            saveSchedule();
+        }
+
+        function saveSchedule() {
+            const classes = document.querySelectorAll('.class');
+            const schedule = [];
+
+            classes.forEach(classEl => {
+                const subject = classEl.querySelector('.subject').value;
+                const time = classEl.querySelector('.time').value;
+                const location = classEl.querySelector('.location') ? classEl.querySelector('.location').value : '';
+                const color = classEl.style.backgroundColor;
+
+                schedule.push({ subject, time, location, color });
+            });
+
+            localStorage.setItem('schedule', JSON.stringify(schedule));
+        }
+
+        function loadSchedule() {
+            const schedule = JSON.parse(localStorage.getItem('schedule'));
+            if (schedule) {
+                schedule.forEach(classData => {
+                    addClassElement(classData);
+                });
+            } else {
+                const defaultClasses = [
+                    { subject: 'Física', time: '8:00 AM - 9:30 AM', location: '', color: '#4a90e2' },
+                    { subject: 'Dibujo', time: '9:30 AM - 11:00 AM', location: '', color: '#f5a623' },
+                    { subject: 'Inglés', time: '11:00 AM - 2:00 PM', location: '', color: '#7ed321' },
+                    { subject: 'Filosofía', time: '2:00 PM - 4:00 PM', location: 'Lab 9b', color: '#50e3c2' },
+                    { subject: 'Ciencias Naturales', time: '4:00 PM - 6:00 PM', location: 'Lab 2a', color: '#d0021b' },
+                    { subject: 'Mates', time: '6:00 PM - 7:00 PM', location: 'Aula 3.4.1', color: '#9013fe' }
+                ];
+                defaultClasses.forEach(classData => {
+                    addClassElement(classData);
+                });
+            }
+        }
+
+        function addClassElement({ subject, time, location, color }) {
+            const dayContainer = document.getElementById('dayContainer');
+            const classEl = document.createElement('div');
+            classEl.className = 'class';
+            classEl.style.backgroundColor = color;
+
+            classEl.innerHTML = `
+                <div class="color-picker" onclick="openColorPicker(this)" style="background-color: ${color};"></div>
+                <input class="editable subject" value="${subject}">
+                <input class="editable time" value="${time}">
+                ${location ? `<input class="editable location" value="${location}">` : ''}
+            `;
+
+            classEl.querySelectorAll('.editable').forEach(input => {
+                input.addEventListener('input', saveSchedule);
+            });
+
+            dayContainer.appendChild(classEl);
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSchedule);
     </script>
 </body>
 </html>
