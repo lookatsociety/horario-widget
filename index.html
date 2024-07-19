@@ -53,12 +53,6 @@
             background: none;
             border: 2px solid #fff;
         }
-        .fisica { background-color: #4a90e2; }
-        .dibujo { background-color: #f5a623; }
-        .ingles { background-color: #7ed321; }
-        .filosofia { background-color: #50e3c2; }
-        .ciencias { background-color: #d0021b; }
-        .mates { background-color: #9013fe; }
         .class .time, .class .location {
             font-size: 12px;
         }
@@ -134,7 +128,8 @@
         }
 
         function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode);
         }
 
         function openColorPicker(element) {
@@ -207,7 +202,13 @@
             dayContainer.appendChild(classEl);
         }
 
-        document.addEventListener('DOMContentLoaded', loadSchedule);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSchedule();
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+        });
     </script>
 </body>
 </html>
